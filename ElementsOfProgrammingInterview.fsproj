@@ -5,6 +5,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="PrimitiveTypes.fs" />
     <Compile Include="StockPriceOptimization.fs" />
     <Compile Include="QuickSort.fs" />
     <Compile Include="Program.fs" />
