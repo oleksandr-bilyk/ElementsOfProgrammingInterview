@@ -182,8 +182,43 @@ module PrimitiveTypes =
         
             [<TestMethod>]
             member this.Test () =
-                let a = smart 0b001000000
-
                 for x, result in data do
                     Assert.IsTrue(bruteForce x = result)
                     Assert.IsTrue(smart x = result)
+
+    module ``Get lowest bit set`` =
+
+        let logic (n: int) = ~~~(n - 1) &&& n
+
+        [<TestClass>]
+        type UnitTest () =
+
+            let data = [
+                0b010000, 0b010000
+                0b001011, 0b000001
+                0b010100, 0b000100
+            ]
+        
+            [<TestMethod>]
+            member this.Test () =
+                for x, result in data do
+                    Assert.IsTrue(logic x = result)
+
+    module ``Swap two bits by indexes`` =
+    
+            let logic (n: int) i j =
+                n
+    
+            [<TestClass>]
+            type UnitTest () =
+    
+                let data = [
+                    0b01001001, 1, 6, 0b01001001
+                ]
+            
+                [<TestMethod>]
+                member this.Test () =
+                    for x, result in data do
+                        Assert.IsTrue(logic x = result)
+
+    
