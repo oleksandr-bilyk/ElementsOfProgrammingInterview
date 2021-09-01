@@ -206,19 +206,63 @@ module PrimitiveTypes =
 
     module ``Swap two bits by indexes`` =
     
-            let logic (n: int) i j =
-                n
+        let logic (n: int) i j =
+            let iBitSet = n &&& (1 <<< i) > 0
+            let jBitSet = n &&& (1 <<< j) > 0
+            if iBitSet = jBitSet then n
+            else n ^^^ (1 <<< i) ^^^ (1 <<< j)
+
+        [<TestClass>]
+        type UnitTest () =
+    
+            let data = [
+                0b01001001, 1, 6, 0b00001011
+            ]
+            
+            [<TestMethod>]
+            member this.Test () =
+                for x, i, j, expected in data do
+                    let result = logic x i j
+                    Assert.IsTrue((expected = result))
+
+    /// Write a program that takes 32 bit integer and returns the 32-bit unsigned integer
+    /// consisting of the bits of the input in reverse order.
+    module ``Invert bits`` =
+        
+            let buildReverseBits () =
+
+                let int16Combinations = 1 <<< 16
+
+                let int16Mask = uint int16Combinations - 1u
+
+                let revertInt16(n: uint16) =
+                    let mutable x = n
+                    for i = 0 to 7 do
+                        let altIndex = 15 - i
+                        if ((x >>> i &&& 1us) ^^^ (x >>> altIndex &&& 1us)) > 0us then
+                            x <- x ^^^ (1us <<< i) ^^^ (1us <<< altIndex)
+                    x
+
+                let cache = Array.init int16Combinations (uint16 >> revertInt16)
+                fun (n: uint) -> 
+                    let p1 = n &&& int16Mask
+                    let p2 = n >>> 16 &&& int16Mask
+                    let p1i = uint cache.[int p1]
+                    let p2i = uint cache.[int p2]
+                    p1i <<< 16 ||| p2i
     
             [<TestClass>]
             type UnitTest () =
-    
+        
                 let data = [
-                    0b01001001, 1, 6, 0b01001001
+                    0b0000_0000_0100_0000_0110_1000_0100_1001u, 0b1001_0010_0001_0110_0000_0010_0000_0000u
                 ]
-            
+                
                 [<TestMethod>]
                 member this.Test () =
-                    for x, result in data do
-                        Assert.IsTrue(logic x = result)
+                    let reverseBits = buildReverseBits()
+                    for x, expected in data do
+                        let result = reverseBits x
+                        Assert.IsTrue((expected = result))
 
     
