@@ -229,40 +229,101 @@ module PrimitiveTypes =
     /// consisting of the bits of the input in reverse order.
     module ``Invert bits`` =
         
-            let buildReverseBits () =
+        let buildReverseBits () =
 
-                let int16Combinations = 1 <<< 16
+            let int16Combinations = 1 <<< 16
 
-                let int16Mask = uint int16Combinations - 1u
+            let int16Mask = uint int16Combinations - 1u
 
-                let revertInt16(n: uint16) =
-                    let mutable x = n
-                    for i = 0 to 7 do
-                        let altIndex = 15 - i
-                        if ((x >>> i &&& 1us) ^^^ (x >>> altIndex &&& 1us)) > 0us then
-                            x <- x ^^^ (1us <<< i) ^^^ (1us <<< altIndex)
-                    x
+            let revertInt16(n: uint16) =
+                let mutable x = n
+                for i = 0 to 7 do
+                    let altIndex = 15 - i
+                    if ((x >>> i &&& 1us) ^^^ (x >>> altIndex &&& 1us)) > 0us then
+                        x <- x ^^^ (1us <<< i) ^^^ (1us <<< altIndex)
+                x
 
-                let cache = Array.init int16Combinations (uint16 >> revertInt16)
-                fun (n: uint) -> 
-                    let p1 = n &&& int16Mask
-                    let p2 = n >>> 16 &&& int16Mask
-                    let p1i = uint cache.[int p1]
-                    let p2i = uint cache.[int p2]
-                    p1i <<< 16 ||| p2i
+            let cache = Array.init int16Combinations (uint16 >> revertInt16)
+            fun (n: uint) -> 
+                let p1 = n &&& int16Mask
+                let p2 = n >>> 16 &&& int16Mask
+                let p1i = uint cache.[int p1]
+                let p2i = uint cache.[int p2]
+                p1i <<< 16 ||| p2i
     
-            [<TestClass>]
-            type UnitTest () =
+        [<TestClass>]
+        type UnitTest () =
         
-                let data = [
-                    0b0000_0000_0100_0000_0110_1000_0100_1001u, 0b1001_0010_0001_0110_0000_0010_0000_0000u
-                ]
+            let data = [
+                0b0000_0000_0100_0000_0110_1000_0100_1001u, 0b1001_0010_0001_0110_0000_0010_0000_0000u
+            ]
                 
-                [<TestMethod>]
-                member this.Test () =
-                    let reverseBits = buildReverseBits()
-                    for x, expected in data do
-                        let result = reverseBits x
+            [<TestMethod>]
+            member this.Test () =
+                let reverseBits = buildReverseBits()
+                for x, expected in data do
+                    let result = reverseBits x
+                    Assert.IsTrue((expected = result))
+
+
+    /// Define the weight of a nonnegative integer x to be the number of bits
+    /// that are set to 1 in its binary representation.
+    /// Fro example since 92 in base-2 equals 0b1011100, the weight of 92 is 4.
+    /// Write a program which takes as input a nonnegative integer x and their
+    /// difference, |y - x|, is as small as possible.
+    module ``Find a closest integer with then same weight`` =
+
+        /// Smart solution is to swap k1 and k2 bits where the smallest k1 is
+        /// the rightmost bit that's different from the LSB, and k2 must be
+        /// the very next bit. In summary, the correct approach is to swap the
+        /// two rightmost consecutive bits that differ.
+        let rec logicV1 (n: int) i =
+            if (n >>> i &&& 1) <> (n >>> (i + 1) &&& 1) then
+                n ^^^ ((1 <<< i) ||| (1 <<< i + 1))
+            else logicV1 n (i + 1)
+
+        /// Solve the same problem with O(1) tome and space.
+        let rec logicV2 (n: int) =
+            if n &&& 1 = 0 then
+                // 0b00010100 = n
+                // 0b00010011 = n - 1
+                // 0b11101100 = ~~~(n - 1)
+                // 0b00000100 = ~~~(n - 1)) &&& n
+                let k1 = (~~~(n - 1)) &&& n
+                let k2 = k1 >>> 1
+                n ^^^ k1 ^^^ k2
+            else
+                //0b00000111 = n
+                //0b11111000 = ~~~n
+                //0b11110111 = (~~~n) - 1
+                //0b00001000 = ~~~((~~~n) - 1)
+                let k1 = ~~~((~~~n) - 1)
+                let k2 = k1 >>> 1
+                n ^^^ k1 ^^^ k2
+                
+
+    
+        [<TestClass>]
+        type UnitTest () =
+        
+            let data = [
+                0b00000001, 0b00000010
+                0b00000011, 0b00000101
+                0b00000111, 0b00001011
+                0b00000010, 0b00000001
+                0b00100100, 0b00100010
+            ]
+                
+            [<TestMethod>]
+            member this.Test () =
+                for x, expected in data do
+                    (
+                        let result = logicV1 x 0
                         Assert.IsTrue((expected = result))
+                    )
+                    (
+                        let result = logicV2 x
+                        Assert.IsTrue((expected = result))
+                    )
 
     
