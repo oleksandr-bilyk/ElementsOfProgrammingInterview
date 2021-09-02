@@ -340,16 +340,16 @@ module PrimitiveTypes =
                 ax <- ax >>> 1
                 bx <- bx >>> 1
 
-        let logic (x: int, y: int) =
+        let multiply (x: int, y: int) =
             // 0b00000011 = 3
             // *
             // 0b00000101 = 5
             // ==========
             // 0b00000011 * 1
             // +
-            // 0b00000000 = 0b00000011 << 1 * 0
+            // 0b00000000 = (0b00000011 << 1) * 0
             // +
-            // 0b00001100 = 0b00000011 << 2 * 1
+            // 0b00001100 = (0b00000011 << 2) * 1
             // ==========
             // 0b00001111 = 15
             let mutable r = 0
@@ -357,8 +357,7 @@ module PrimitiveTypes =
                 if ((1 <<< i) &&& y) > 0 then
                     r <- r + (x <<< i)
             r
-                    
-    
+                   
         [<TestClass>]
         type UnitTest () =
         
@@ -369,6 +368,51 @@ module PrimitiveTypes =
             [<TestMethod>]
             member this.Test () =
                 for x, y, expected in data do
-                    let result = logic (x, y)
+                    let result = multiply (x, y)
+                    Assert.IsTrue((expected = result))
+
+    module ``Compute X divide Y without arithmetical operations`` =
+
+        let divide (x: int, y: int) =
+            // 0b00001111 = 15
+            // divide
+            // 0b00000101 = 5
+            // -> -> ->
+            // 0b00001111 = 15
+            /// -
+            // 0b00001010 = 0b101 << 1
+            // ===
+            // 0b00000101
+            // -
+            // 0b00000101 = 0b101 << 0
+            // 
+            // result: 0b11 = 3
+            let mutable sum = x
+            let mutable power = 16
+            let mutable yPower = y <<< power
+            let mutable result = 0
+            while sum >= y do
+                while yPower > sum do
+                    power <- power - 1
+                    yPower <- yPower >>> 1
+
+                sum <- sum - yPower
+                result <- result ||| (1 <<< power)
+            result
+                    
+    
+        [<TestClass>]
+        type UnitTest () =
+        
+            let data = [
+                15, 5, 3
+                25, 5, 5
+                8, 3, 2
+            ]
+                
+            [<TestMethod>]
+            member this.Test () =
+                for x, y, expected in data do
+                    let result = divide (x, y)
                     Assert.IsTrue((expected = result))
     
