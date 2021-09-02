@@ -300,8 +300,6 @@ module PrimitiveTypes =
                 let k1 = ~~~((~~~n) - 1)
                 let k2 = k1 >>> 1
                 n ^^^ k1 ^^^ k2
-                
-
     
         [<TestClass>]
         type UnitTest () =
@@ -326,4 +324,51 @@ module PrimitiveTypes =
                         Assert.IsTrue((expected = result))
                     )
 
+    module ``Compute X x Y without arithmetical operations`` =
+        let add (a: int, b: int) =
+            let mutable carryin = 0
+            let mutable ax, bx = a, b
+            let mutable sum = 0
+            let mutable i = 0
+            while ax > 0 || bx > 0 do
+                let ai, bi = ax &&& i, bx &&& i
+                let carryout = (ai &&& bi) ||| (ai &&& carryin) ||| (bi &&& carryin)
+                let k = ai ^^^ bi ^^^ carryin
+                sum <- sum ||| k
+                carryin <- carryout <<< 1
+                i <- i <<< 1
+                ax <- ax >>> 1
+                bx <- bx >>> 1
+
+        let logic (x: int, y: int) =
+            // 0b00000011 = 3
+            // *
+            // 0b00000101 = 5
+            // ==========
+            // 0b00000011 * 1
+            // +
+            // 0b00000000 = 0b00000011 << 1 * 0
+            // +
+            // 0b00001100 = 0b00000011 << 2 * 1
+            // ==========
+            // 0b00001111 = 15
+            let mutable r = 0
+            for i = 0 to 31 do
+                if ((1 <<< i) &&& y) > 0 then
+                    r <- r + (x <<< i)
+            r
+                    
+    
+        [<TestClass>]
+        type UnitTest () =
+        
+            let data = [
+                3, 5, 15
+            ]
+                
+            [<TestMethod>]
+            member this.Test () =
+                for x, y, expected in data do
+                    let result = logic (x, y)
+                    Assert.IsTrue((expected = result))
     
