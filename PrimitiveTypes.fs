@@ -415,4 +415,34 @@ module PrimitiveTypes =
                 for x, y, expected in data do
                     let result = divide (x, y)
                     Assert.IsTrue((expected = result))
+
+    module ``Compute X power Y`` =
+
+            // 0b0011^5 = 0b0011^4 + 0b0011^1
+            let divide (x: int, y: int) =
+                let mutable product = 1
+                let mutable xPower = x
+                let mutable yPower = y
+                while yPower > 0 do
+                    if (yPower &&& 1) > 0 then
+                        product <- product * xPower
+                    xPower <- xPower * xPower
+                    yPower <- yPower >>> 1
+
+                product
+                        
+        
+            [<TestClass>]
+            type UnitTest () =
+            
+                let data = [
+                    2, 3, 8
+                    3, 2, 9
+                ]
+                    
+                [<TestMethod>]
+                member this.Test () =
+                    for x, y, expected in data do
+                        let result = divide (x, y)
+                        Assert.IsTrue((expected = result))
     
