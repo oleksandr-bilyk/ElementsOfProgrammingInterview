@@ -560,4 +560,62 @@ module PrimitiveTypes =
                         let delta = expected - float i
                         let ratio = delta / expected
                         Assert.IsTrue(ratio <= 0.1)
+
+    module ``Rectangle intersection``=
+
+        type Rect = {
+            X: int
+            Width: int
+            Y: int
+            High: int
+        }
+
+        let intersecOneD(a1, a2, b1, b2) =
+            if a1 <= b1 then
+                let dx = b1 - a1
+                let aw = a2 - dx
+                if aw > 0 then
+                    Some (b1, Math.Min(aw, b2))
+                else None
+            else
+                let dx = a1 - b1
+                let bw = b2 - dx
+                if bw > 0 then
+                    Some (a1, Math.Min(bw, a2))
+                else None
+
+        let intersection (a: Rect, b: Rect)  =
+            let xIntersection = intersecOneD (a.X, a.Width, b.X, b.Width)
+            let yInteresection = intersecOneD (a.Y, a.High, b.Y, b.High)
+            match xIntersection, yInteresection with
+            | Some (x, width), Some (y, high) ->
+                Some { X = x; Width = width; Y = y; High = high }
+            | _ -> None
+    
+                        
+        [<TestClass>]
+        type UnitTest () =
+
+            let d = { X = 1; Width = 2; Y= 1; High = 2 }
+                            
+            let data = [
+                { d with X = 0; Width = 2 },
+                { d with X = 3; Width = 1 },
+                None
+
+                { d with X = 1; Width = 3 },
+                { d with X = 2; Width = 2},
+                Some { d with X = 2; Width = 2 }
+
+                { d with X = 1; Width = 3 },
+                { d with X = 0; Width = 2},
+                Some { d with X = 1; Width = 1 }
+            ]
+                                    
+            [<TestMethod>]
+            member this.Test () =
+                    
+                for a, b, expected in data do
+                    let result = intersection (a, b)
+                    Assert.IsTrue((result = expected))
     
