@@ -469,4 +469,45 @@ module PrimitiveTypes =
                 for n, expected in data do
                     let result = revertDigits n
                     Assert.IsTrue((expected = result))
+
+    module ``Check if a decimal integer is a palindrome`` =
+
+        let biggestDecimalDigit(n: int) =
+            Math.Log10(float n) |> int
+
+        let testPalindrome (n: int) =
+            if n = 0 then true
+            else
+                let mutable i, j = biggestDecimalDigit n, 0
+                let mutable x = n
+                let mutable palindrome = true
+                while x > 0 && palindrome do
+                    let right = x % 10
+                    let topDigit = Math.Pow(10., float i) |> int
+                    let left = x / topDigit
+                    if left <> right then
+                        palindrome <- false
+                    x <- x / topDigit / 10
+                palindrome
+                
+        [<TestClass>]
+        type UnitTest () =
+                    
+            let data = [
+                0, true
+                1, true
+                7, true
+                11, true
+                121, true
+                343, true
+                3421243, true
+                12, false
+                100, false
+            ]
+                            
+            [<TestMethod>]
+            member this.Test () =
+                for n, expected in data do
+                    let result = testPalindrome n
+                    Assert.IsTrue((expected = result))
     
