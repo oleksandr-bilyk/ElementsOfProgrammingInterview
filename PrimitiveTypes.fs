@@ -472,13 +472,10 @@ module PrimitiveTypes =
 
     module ``Check if a decimal integer is a palindrome`` =
 
-        let biggestDecimalDigit(n: int) =
-            Math.Log10(float n) |> int
-
         let testPalindrome (n: int) =
             if n = 0 then true
             else
-                let mutable i, j = biggestDecimalDigit n, 0
+                let mutable i, j = Math.Log10(float n) |> int, 0
                 let mutable x = n
                 let mutable palindrome = true
                 while x > 0 && palindrome do
@@ -510,4 +507,57 @@ module PrimitiveTypes =
                 for n, expected in data do
                     let result = testPalindrome n
                     Assert.IsTrue((expected = result))
+
+    module ``Cenerate uniform Random numbers`` =
+    
+        let generateUniformRandomNumberFromTo (random: unit -> bool) maxRetries (a: int, b: int) =
+            let shift = b - a + 1
+            if shift < 2 then failwith "A must be less than B."
+            let entropy = Math.Log2(float shift)
+            let entropyInt =
+                let i = entropy |> int
+                if entropy - (i |> float) > 0. then i + 1
+                else i
+            let generate() =
+                let mutable r = 0
+                for i = 0 to entropyInt do
+                    let k = if random() then 1 else 0
+                    r <- (r <<< 1) + k
+                r
+            let rec genUntill retryIter =
+                if retryIter < maxRetries then
+                    let random = generate()
+                    if random < shift then a + random
+                    else genUntill (retryIter + 1)
+                else
+                    a
+            genUntill 0
+
+                    
+        [<TestClass>]
+        type UnitTest () =
+                        
+            let data = [
+                3, 5
+            ]
+                                
+            [<TestMethod>]
+            member this.Test () =
+                
+                for a, b in data do
+                    let random = Random(0)
+                    let randomBool() = if random.Next(2) = 0 then false else true
+                    let testsCount = 10000
+                    let statistics =
+                        seq { 1 .. testsCount }
+                        |> Seq.map (fun _ -> generateUniformRandomNumberFromTo randomBool 10 (a, b))
+                        |> Seq.groupBy id
+                        |> Seq.map (fun (k, v) -> Seq.length v)
+                        |> Seq.toList
+                    Assert.IsTrue((statistics.Length = b - a + 1))
+                    for i in statistics do
+                        let expected = float testsCount / float statistics.Length
+                        let delta = expected - float i
+                        let ratio = delta / expected
+                        Assert.IsTrue(ratio <= 0.1)
     
