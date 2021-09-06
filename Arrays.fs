@@ -3,6 +3,7 @@
 open System
 open System.Linq
 open Microsoft.VisualStudio.TestTools.UnitTesting
+open System.Collections.Generic
 
 module ``Sort odd numbers to left and even numbers to right`` =
     let sortOddEven (a: int array) =
@@ -331,3 +332,85 @@ module ``Sort bool with true order`` =
                     |> Array.rev |> Array.take expected.Length |> Array.rev
                 let test = Enumerable.SequenceEqual(fieldKey, expected)
                 Assert.IsTrue(test)
+
+    type DaysOfTheWeek = Monday | Tuersday | Wednesday
+
+    let dayNumber day =
+        match day with
+        | Monday -> 0
+        | Tuersday -> 1
+        | Wednesday -> 2
+
+module ``Increment and arbitrary-precision integer`` =
+    let increment (a: List<int>) =
+        a.[a.Count - 1] <- a.[a.Count - 1] + 1
+
+        let mutable i = a.Count - 1
+        while a.[i] >= 10 && i > 0 do
+            a.[i] <- 0
+            a.[i - 1] <- a.[i - 1] + 1
+            i <- i - 1
+        if a.[0] = 10 then
+            a.[0] <- 0
+            a.Insert(0, 1)
+
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [| 1; 3; 5 |], [| 1; 3; 6 |]
+            [| 1; 3; 9 |], [| 1; 4; 0 |]
+            [| 1; 9; 9 |], [| 2; 0; 0 |]
+            [| 9; 9; 9 |], [| 1; 0; 0; 0 |]
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                let field = new List<int>(source)
+                increment field
+                let correct = Enumerable.SequenceEqual(field, expected)
+                Assert.IsTrue(correct)
+
+
+module ``Add two strings with digits`` =
+
+    let add (a: string, b: string) =
+        let aList = new List<int>(a.ToCharArray() |> Seq.rev |> Seq.map (fun c -> (int c) - (int '0')))
+        let bList = new List<int>(b.ToCharArray() |> Seq.rev |> Seq.map (fun c -> (int c) - (int '0')))
+        let mutable carryout = 0
+        let mutable i = 0
+        while i < aList.Count || i < bList.Count || carryout > 0 do
+            let ai =
+                if i >= aList.Count then
+                    aList.Add(0)
+                    0
+                else aList.[i]
+            let bi = if i >= bList.Count then 0 else bList.[i]
+            let r = ai + bi + carryout
+            aList.[i] <- r % 10
+            carryout <- r / 10
+            i <- i + 1
+        String(aList |> Seq.map(fun i -> i + (int '0') |> char) |> Seq.toArray |> Array.rev)
+
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            "135", "0", "135"
+            "135", "1", "136"
+            "139", "1", "140"
+            "199", "1", "200"
+            "999", "1", "1000"
+            "15", "15", "30"
+            "12", "400", "412"
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for a, b, expected in data do
+                let r: string = add(a, b)
+                let correct = Enumerable.SequenceEqual(r, expected)
+                Assert.IsTrue(correct)
