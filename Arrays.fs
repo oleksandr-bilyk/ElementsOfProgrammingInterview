@@ -414,3 +414,62 @@ module ``Add two strings with digits`` =
                 let r: string = add(a, b)
                 let correct = Enumerable.SequenceEqual(r, expected)
                 Assert.IsTrue(correct)
+
+module ``Multiply two strings with digits`` =
+
+    let convertToArray (x: string) =
+        let negative = x.[0] = '-'
+        let items =
+            x.ToCharArray()
+            |> (fun i -> if negative then i |> Array.skip 1 else i)
+            |> Array.map (fun c -> (int c) - (int '0'))
+        negative, items
+
+    let add (a: string, b: string) =
+        let aNegative, aList = convertToArray a
+        let bNegative, bList = convertToArray b
+        let rList = Array.create (aList.Length + bList.Length) 0
+
+        for bi = bList.Length - 1 downto 0 do
+            for ai = aList.Length - 1 downto 0 do
+                let ri = ai + bi + 1
+                let update = (rList.[ri]) + aList.[ai] * bList.[bi]
+                rList.[ri] <- update % 10
+                rList.[ri - 1] <- update / 10
+
+        let rListAdjusted =
+
+            let mutable firstNonZeroIndex = 0
+            while rList.[firstNonZeroIndex] = 0 && firstNonZeroIndex < rList.Length - 1 do
+                firstNonZeroIndex <- firstNonZeroIndex + 1
+            
+            if firstNonZeroIndex = 0
+            then rList
+            else Array.sub rList firstNonZeroIndex (rList.Length - firstNonZeroIndex)
+
+        let negativePrifix = if aNegative <> bNegative then "-" else ""
+            
+        negativePrifix + String(rListAdjusted |> Array.map(fun i -> i + (int '0') |> char))
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            //"0", "0", "0"
+            //"1", "1", "1"
+            //"1", "2", "2"
+            //"3", "0", "0"
+            //"0", "3", "0"
+            "-1", "1", "-1"
+            "1", "-1", "-1"
+            "-1", "-1", "1"
+            "5", "5", "25"
+            "55", "5", "275"
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for a, b, expected in data do
+                let r: string = add(a, b)
+                let correct = Enumerable.SequenceEqual(r, expected)
+                Assert.IsTrue(correct)
