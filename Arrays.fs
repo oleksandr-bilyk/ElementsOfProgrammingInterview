@@ -100,6 +100,8 @@ module ``3 Key Groups`` =
             swap a i right
             right <- right - 1
 
+        /// Mature strategy uses left type from first element and
+        /// paremetrized right type.
         let matureStrategy (typeRight: Value) () =
             let item = a.[i]
             if item = typeLeft then
@@ -117,7 +119,6 @@ module ``3 Key Groups`` =
         let initialStrategy() =
             let item = a.[i]
             if item = typeLeft then
-                swap a i left
                 left <- left + 1
                 i <- i + 1
             else
@@ -134,10 +135,97 @@ module ``3 Key Groups`` =
     type UnitTest () =
 
         let data = [
-            //[ B; C; A ], [ B; C; A ]
+            [ B; C; A ], [ B; A; C ]
             [ B; C; A; B; C; A ], [ B; B; A; A; C; C ]
         ]
     
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                let field = Array.ofList source
+
+                sort field
+                let test = Enumerable.SequenceEqual(field, expected)
+                Assert.IsTrue(test)
+
+/// Given an aray A of n objects with keys that takes one of four values,
+/// reorder the array so that all objects that have the key appear together.
+module ``Four different keys appear together`` =
+
+    type Value = L1 | L2 | R1 | R2
+
+    let sort (a: Value array) =
+
+        let swap i j = 
+            let t = a.[i]
+            a.[i] <- a.[j]
+            a.[j] <- t
+
+        let typeLeft1 = a.[0]
+        let mutable left1, left2, right1, right2 = 1, 1, a.Length - 1, a.Length - 1
+
+        let mutable strategy: unit -> unit = ignore
+
+        // Stage when all four types are defined
+        let stageMature typeLeft2 typeRight1 () =
+            let item = a.[left2]
+            if item = typeLeft1 then
+                swap left1 left2
+                left1 <- left1 + 1
+                if left1 > left2 then
+                    left2 <- left1
+            else if item = typeLeft2 then
+                left2 <- left2 + 1
+            else if item = typeRight1 then
+                swap left2 right1
+                right1 <- right1 - 1
+                if right1 < right2 then
+                    right2 <- right1
+            else
+                swap left2 right2
+                right2 <- right2 - 1
+
+        // Stage when typeLeft1 and typeLeft2 only are initialized
+        let stageLeft2 typeLeft2 () =
+            let item = a.[left2]
+            if item = typeLeft1 then
+                left1 <- left1 + 1
+                left2 <- left1
+            else if item = typeLeft2 then
+                left2 <- left2 + 1
+            else
+                swap left2 right1
+                right1 <- right1 - 1
+                if right1 < right2 then
+                    right2 <- right1
+                strategy <- stageMature typeLeft2 item
+
+        // Stage when typeLeft1 only is initialized
+        let stageLeft1() =
+            let item = a.[left2]
+            if item = typeLeft1 then
+                left1 <- left1 + 1
+                left2 <- left2 + 1
+            else
+                left2 <- left2 + 1
+                strategy <- stageLeft2 item
+
+        strategy <- stageLeft1
+
+        while left2 <= right2 do
+            strategy()
+
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ L1; L2; R1; R2 ], [ L1; L2; R2; R1 ]
+
+            [ L1; L1; L1; L2; L2; L2; R1; R1; L1; L2; L1; R1; R2; L1; R2; L2; R2 ],
+            [ L1; L1; L1; L1; L1; L1; L2; L2; L2; L2; L2; R2; R2; R2; R1; R1; R1 ]
+        ]
+
         [<TestMethod>]
         member this.Test () =
             for source, expected in data do
