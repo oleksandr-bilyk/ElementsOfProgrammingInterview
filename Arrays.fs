@@ -52,8 +52,7 @@ module ``Duch national flag sorting`` =
             | Red ->
                 swap a i leftRed
                 leftRed <- leftRed + 1
-                if leftRed > i then
-                    i <- leftRed
+                i <- i + 1
             | White ->
                 i <- i + 1
             | Blue ->
@@ -75,6 +74,74 @@ module ``Duch national flag sorting`` =
         member this.Test () =
             for source, expected in data do
                 let field = Array.copy source
+
+                sort field
+                let test = Enumerable.SequenceEqual(field, expected)
+                Assert.IsTrue(test)
+
+
+module ``3 Key Groups`` =
+
+    type Value = A | B | C
+
+    let swap (a: 'a array) i j = 
+        let t = a.[i]
+        a.[i] <- a.[j]
+        a.[j] <- t
+
+    /// Assuming that keys take one of tree values, reorder the array so that all objects
+    /// with the same key appear together. Ther order of the subarrays is not important.
+
+    let sort (a: Value array) =
+        let typeLeft = a.[0]
+        let mutable i, left, right = 1, 1, a.Length - 1
+
+        let swapRight() =
+            swap a i right
+            right <- right - 1
+
+        let matureStrategy (typeRight: Value) () =
+            let item = a.[i]
+            if item = typeLeft then
+                swap a i left
+                left <- left + 1
+                i <- i + 1
+            elif item = typeRight then swapRight()
+            else 
+                i <- i + 1
+
+        let mutable strategy: unit -> unit = id
+
+        /// We know left type and any non-left type first time detected will be
+        /// identified as right type. Strategy will be updates to work with three types.
+        let initialStrategy() =
+            let item = a.[i]
+            if item = typeLeft then
+                swap a i left
+                left <- left + 1
+                i <- i + 1
+            else
+                swapRight()
+                strategy <- matureStrategy item
+
+        strategy <- initialStrategy
+
+        while i <= right do
+            strategy()
+
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            //[ B; C; A ], [ B; C; A ]
+            [ B; C; A; B; C; A ], [ B; B; A; A; C; C ]
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                let field = Array.ofList source
 
                 sort field
                 let test = Enumerable.SequenceEqual(field, expected)
