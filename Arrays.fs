@@ -234,3 +234,100 @@ module ``Four different keys appear together`` =
                 sort field
                 let test = Enumerable.SequenceEqual(field, expected)
                 Assert.IsTrue(test)
+
+module ``Sort bool`` =
+
+    let swap (a: 'a array) i j = 
+        let t = a.[i]
+        a.[i] <- a.[j]
+        a.[j] <- t
+
+    let sort (a: bool array) =
+        let mutable i, j = 0, a.Length - 1
+        while i <= j do
+            match a.[i] with
+            | false ->
+                i <- i + 1
+            | true ->
+                swap a i j
+                j <- j - 1
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ false; true; false; true ], [ false; false; true; true ]
+            [ true; true; false; true; false; true ], [ false; false; true; true; true; true]
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                let field = List.toArray source
+
+                sort field
+                let test = Enumerable.SequenceEqual(field, expected)
+                Assert.IsTrue(test)
+
+/// Given an array A of n objects with Boolean-valued keys,
+/// reorder the array so that objects that have the key false appear first.
+/// The relative ordering of the objects with key true should not change.
+module ``Sort bool with true order`` =
+
+    type Item = { Tag: string; Key: bool }
+
+    let swap (a: 'a array) i j = 
+        let t = a.[i]
+        a.[i] <- a.[j]
+        a.[j] <- t
+
+    let sort (a: Item array) =
+        let mutable i, j = a.Length - 1, a.Length - 1
+        while i >= 0 do
+            if a.[i].Key then
+                swap a i j
+                j <- j - 1
+            i <- i - 1
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [
+                { Tag = "A"; Key = false }
+                { Tag = "B"; Key = true }
+                { Tag = "C"; Key = false }
+                { Tag = "D"; Key = true }
+            ],
+            [
+                "B"
+                "D"
+            ]
+
+            [
+                { Tag = "A"; Key = true }
+                { Tag = "B"; Key = true }
+                { Tag = "C"; Key = false }
+                { Tag = "D"; Key = true }
+                { Tag = "E"; Key = false }
+                { Tag = "F"; Key = true }
+            ],
+            [
+                "A"
+                "B"
+                "D"
+                "F"
+            ]
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                let field = List.toArray source
+
+                sort field
+                let fieldKey =
+                    field |> Array.map (fun i -> i.Tag)
+                    |> Array.rev |> Array.take expected.Length |> Array.rev
+                let test = Enumerable.SequenceEqual(fieldKey, expected)
+                Assert.IsTrue(test)
