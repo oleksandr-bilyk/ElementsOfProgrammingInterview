@@ -641,3 +641,74 @@ module ``Delete more than max duplicates from a sorted array`` =
                 let field = source.ToArray()
                 logic field maxCount
                 Assert.IsTrue(Enumerable.SequenceEqual(field, expected))
+
+module ``Buy and sell stock once`` =
+
+    let logic (a: int[]) =
+        let mutable max = 0
+        let mutable min = a.[0]
+        let mutable i = 1
+        while i < a.Length do
+            let d = a.[i] - min
+            if d > max then
+                max <- d
+            if a.[i] < min then
+                min <- a.[i]
+            i <- i + 1
+        max
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ 310; 315; 275; 295; 260; 270; 290; 230; 255; 250; ], 30
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, max in data do
+                let field = source.ToArray()
+                let r = logic field
+                Assert.IsTrue((r = max))
+
+/// Write a program that takes an array of integers and finds the length of
+/// a longest sobarray all of whise entries are equal.             
+module ``Longest subarray of equal entries`` =
+
+    let logic (a: int[]) =
+        let mutable longestSubarrayValue = -1
+        let mutable longestSubarrayLength = 0
+
+        let mutable v = a.[0] 
+        let mutable l = 1
+        let mutable i = 1
+        while i < a.Length do
+            let item = a.[i]
+            if item <> v then
+                if l > longestSubarrayLength then
+                    longestSubarrayValue <- v
+                    longestSubarrayLength <- l
+                l <- 0
+                v <- item
+            i <- i + 1
+            l <- l + 1
+
+        if l > longestSubarrayLength then
+            longestSubarrayValue <- v
+            longestSubarrayLength <- l
+
+        longestSubarrayValue, longestSubarrayLength
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ 1; 2; 2; 3; 4; 5; 5; 5; 6; 6; ], (5, 3)
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                let field = source.ToArray()
+                let r = logic field
+                Assert.IsTrue((r = expected))
