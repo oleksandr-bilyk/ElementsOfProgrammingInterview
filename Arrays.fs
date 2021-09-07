@@ -712,3 +712,77 @@ module ``Longest subarray of equal entries`` =
                 let field = source.ToArray()
                 let r = logic field
                 Assert.IsTrue((r = expected))
+
+module ``Buy and sell stock twice`` =
+
+    let logicWithAllocation (a: int[]) =
+
+        let firstBuySellProfits = Array.create a.Length 0
+
+        ((* forward scan to find  *)
+            let mutable maxProfit = 0
+            let mutable min = a.[0]
+            let mutable i = 1
+        
+            while i < a.Length do
+                let d = a.[i] - min
+                if d > maxProfit then
+                    maxProfit <- d
+                if a.[i] < min then
+                    min <- a.[i]
+                firstBuySellProfits.[i] <- maxProfit
+                i <- i + 1
+        )
+
+        ((* backward scan *)
+            let mutable maxDoubleBuySellProfit = 0
+            let mutable max = a.[a.Length - 1]
+            let mutable i = a.Length - 1
+            while i >= 0 do
+                let item = a.[i]
+                let firstBuySell = if i > 0 then firstBuySellProfits.[i - 1] else 0
+                let doubleBuySellProfit = max - item + firstBuySell
+                if doubleBuySellProfit > maxDoubleBuySellProfit then
+                    maxDoubleBuySellProfit <- doubleBuySellProfit
+                i <- i - 1
+            maxDoubleBuySellProfit
+        )
+
+    let logicLinear (a: int[]) =
+        let mutable maxFirstDeal = 0
+        let mutable maxSecondDeal = 0
+        let mutable min = a.[0]
+        let mutable i = 1
+        while i < a.Length do
+            if a.[i] < min then
+                maxFirstDeal <- maxSecondDeal
+                maxSecondDeal <- 0
+                min <- a.[i]
+            else
+                let d = a.[i] - min
+                if d > maxSecondDeal then
+                    maxSecondDeal <- d
+
+            i <- i + 1
+        maxFirstDeal + maxSecondDeal
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ 12; 11; 13; 9; 12; 8; 14; 13; 15 ], 10
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, max in data do
+                (
+                    let field = source.ToArray()
+                    let r = logicWithAllocation field
+                    Assert.IsTrue((r = max))
+                )
+                (
+                    let field = source.ToArray()
+                    let r = logicLinear field
+                    Assert.IsTrue((r = max))
+                )
