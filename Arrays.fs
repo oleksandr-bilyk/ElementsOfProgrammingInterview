@@ -581,3 +581,63 @@ module ``Compute the minimum number of steps to advancing through array`` =
                     let r = linear source
                     Assert.IsTrue((r = expected))
                 )
+
+module ``Delete duplicates from a sorted array`` =
+
+    let logic (a: int[]) =
+        let mutable i = 0
+        for j = 1 to a.Length - 1 do
+            if a.[j] <> a.[i] then
+                i <- i + 1
+                a.[i] <- a.[j]
+        for ii = i + 1 to a.Length - 1 do
+            a.[ii] <- 0
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ 1; 1 ], [ 1; 0 ]
+            [ 2; 3; 5; 5; 7; 11; 11; 11; 13 ], [ 2; 3; 5; 7; 11; 13; 0; 0; 0 ]
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                let field = source.ToArray()
+                logic field
+                Assert.IsTrue(Enumerable.SequenceEqual(field, expected))
+
+module ``Delete more than max duplicates from a sorted array`` =
+
+    let logic (a: int[]) maxCount =
+        let mutable i = 0
+        let mutable count = 1
+        for j = 1 to a.Length - 1 do
+            if a.[j] <> a.[i] then
+                i <- i + 1
+                a.[i] <- a.[j]
+                count <- 1
+            else
+                if count < maxCount then
+                    count <- count + 1
+                    i <- i + 1
+
+        for ii = i + 1 to a.Length - 1 do
+            a.[ii] <- 0
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ 1; 1 ], 1, [ 1; 0 ]
+            [ 1; 1 ], 2, [ 1; 1 ]
+            [ 2; 3; 5; 5; 7; 11; 11; 11; 13 ], 2, [ 2; 3; 5; 5; 7; 11; 11; 13; 0 ]
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, maxCount, expected in data do
+                let field = source.ToArray()
+                logic field maxCount
+                Assert.IsTrue(Enumerable.SequenceEqual(field, expected))
