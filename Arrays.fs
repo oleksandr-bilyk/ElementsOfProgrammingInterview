@@ -473,3 +473,111 @@ module ``Multiply two strings with digits`` =
                 let r: string = add(a, b)
                 let correct = Enumerable.SequenceEqual(r, expected)
                 Assert.IsTrue(correct)
+
+/// In a particular board game, a player has to try to advance through a sequence of
+/// positions. Each position has a nonnegative integer associated with it,
+/// representing the maximum you can advance from that position in one move.
+module ``Advancing through and array`` =
+    let bruteForceRecursion (a: int[]) =
+        let rec iter position =
+            if position >= a.Length then true
+            else
+                let mutable i = 1
+                let mutable found = false
+                while i <= a.[position]  && not found do
+                    if iter (position + i) then
+                        found <- true
+                    i <- i + 1
+                found
+        iter 0
+
+    let linear (a: int[]) =
+        let mutable perspective = 0 // Max possible perspective index detected
+        let mutable i = 0
+        while i <= perspective && perspective < a.Length do
+            perspective <- Math.Max(perspective, i + a.[i])
+            i <- i + 1
+        i >= a.Length // end or array reached
+
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [| 0; 0 |], false
+            [| 3; 3; 1; 0; 2; 0; 1 |], true
+            [| 3; 2; 0; 0; 2; 0; 1 |], false
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                (
+                    let r = bruteForceRecursion source
+                    Assert.IsTrue((r = expected))
+                )
+                (
+                    let r = linear source
+                    Assert.IsTrue((r = expected))
+                )
+
+/// In a particular board game, a player has to try to advance through a sequence of
+/// positions. Each position has a nonnegative integer associated with it,
+/// representing the maximum you can advance from that position in one move.
+module ``Compute the minimum number of steps to advancing through array`` =
+    let bruteForceRecursion (a: int[]) =
+        let rec iter position deapth =
+            if position >= a.Length then Some deapth
+            else
+                forEach position deapth 1 None
+        and forEach position deapth i md =
+            if i <= a.[position] then
+                let r = iter (position + i) (deapth + 1)
+                let g =
+                    match r, md with
+                    | Some dv, Some mdv -> Some (Math.Min(dv, mdv))
+                    | Some dv, None -> Some dv
+                    | None, Some mdv -> Some mdv
+                    | None, None -> None
+                forEach position deapth (i + 1) g
+            else
+                md
+        iter 0 0
+
+
+    let linear (a: int[]) =
+        let mutable perspective = 0 // Max possible perspective index detected
+        let mutable i = 0
+        let mutable steps = 0
+        while i <= perspective && perspective < a.Length do
+            perspective <-
+                let candidate = i + a.[i]
+                if perspective < candidate then
+                    steps <- steps + 1
+                    candidate
+                else
+                    perspective
+            i <- i + 1
+        if i >= a.Length then Some steps else None
+
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [| 0; 0 |], None
+            [| 3; 3; 1; 0; 2; 0; 1 |], Some 4
+            [| 3; 2; 0; 0; 2; 0; 1 |], None
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source, expected in data do
+                (
+                    let r = bruteForceRecursion source
+                    Assert.IsTrue((r = expected))
+                )
+                (
+                    let r = linear source
+                    Assert.IsTrue((r = expected))
+                )
