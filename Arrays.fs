@@ -786,3 +786,60 @@ module ``Buy and sell stock twice`` =
                     let r = logicLinear field
                     Assert.IsTrue((r = max))
                 )
+
+module ``Compute and alternation`` =
+
+    let logicSort (a: int[]) =
+        Array.Sort(a)
+        let mutable i = 1
+        while i < a.Length - 1 do
+            let t = a.[i]
+            a.[i] <- a.[i + 1]
+            a.[i + 1] <- t
+            i <- i + 2
+
+    let swap (s: int[]) i j =
+        let t = s.[i]
+        s.[i] <- s.[j]
+        s.[j] <- t
+
+    let logicLinear (l: int[]) =
+        for i = 0 to l.Length - 3 do
+            let s = Array.sub l i 3
+            Array.Sort(s)
+            if i % 2 > 0 then
+                swap s 0 2
+            l.[i] <- s.[0]
+            l.[i + 1] <- s.[1]
+            l.[i + 2] <- s.[2]
+        if l.Length % 2 > 0 then
+            swap l (l.Length - 2) (l.Length - 1)
+
+
+    let test (a: int[]) =
+        for i = 0 to a.Length - 2 do
+            let x, y = a.[i], a.[i + 1]
+            let op = if i % 2 = 0 then (<) else (>)
+            let correct = op x y
+            Assert.IsTrue(correct)
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let data = [
+            [ 1; 2; 3; 4; 5; 6; 7; 8; 9 ]
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for source in data do
+                (
+                    let field = source.ToArray()
+                    logicSort field
+                    test field
+                )
+                (
+                    let field = source.ToArray()
+                    logicLinear field
+                    test field
+                )
