@@ -843,3 +843,54 @@ module ``Compute and alternation`` =
                     logicLinear field
                     test field
                 )
+
+module ``Enumerate all primes to N`` =
+
+    let primesBruteForce n =
+        let isPrime i =
+            seq { 2 .. i - 1 } |> Seq.exists (fun j -> (i % j) = 0) |> not
+        Seq.append
+            ( seq { 1; 2 })
+            ( seq { 3 .. n } |> Seq.filter isPrime )
+
+    let primesPrecompute n =
+        let m = Array.create (n + 1) true
+        for i = 2 to n do
+            if m.[i] then
+                for j in (i * 2) .. i .. n do
+                    m.[j] <- false
+        m |> Seq.mapi (fun i a -> if a then (Some i) else None)
+        |> Seq.skip 1
+        |> Seq.choose id
+
+    let primesPrecomputePlus n =
+        // Flags for odd numbers greater than 2
+        let m = Array.create ((n - 1) / 2) true
+        for i in 3 .. 2 .. n do
+            let d = (i - 3) / 2
+            if m.[d] then
+                for j in (i * 2 + i) .. i .. n do
+                    if j % 2 > 0 then
+                        let d = (j - 3) / 2
+                        m.[d] <- false
+        let result =
+            m |> Seq.mapi (fun i a -> if a then Some (3 + i * 2) else None)
+            |> Seq.choose id
+        Seq.append (seq { 1; 2 }) result
+
+    [<TestClass>]
+    type UnitTest () =
+
+        let primes = [ 1; 2; 3; 5; 7; 11; 13; 17; 19 ]
+        let algo =[
+            "Bruteforce", primesBruteForce
+            "Precompute", primesPrecompute
+            "Precompute with ignoring even numbers", primesPrecomputePlus
+        ]
+    
+        [<TestMethod>]
+        member this.Test () =
+            for name, algo in algo do
+                let r = algo 20 |> Seq.toList
+                let t = Enumerable.SequenceEqual(r, primes)
+                Assert.IsTrue(t, name)
